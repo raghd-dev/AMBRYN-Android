@@ -1,0 +1,22 @@
+-- AMBRYN non-admin write-denial smoke test (PSQL ONLY)
+-- Run with trusted PostgreSQL connection against a TEST/development database.
+-- Uses a fresh random UUID; does not require an existing customer record.
+-- Everything below runs in a transaction and is rolled back.
+-- This simulates database role + JWT claim context, NOT a live REST token test.
+-- On any error, run ROLLBACK; if still at postgres=!>.
+\set ON_ERROR_STOP on
+\pset pager off
+\echo Beginning simulated non-admin RLS negative test.
+BEGIN;
+SELECT set_config('request.jwt.claim.sub', gen_random_uuid()::text, true) IS NOT NULL AS jwt_subject_set;
+SELECT set_config('request.jwt.claim.role', 'authenticated', true) IS NOT NULL AS jwt_role_set;
+SET LOCAL ROLE authenticated;
+SELECT current_user, auth.uid() IS NOT NULL AS identity_present,
+       public.ambryn_is_admin() AS is_admin;
+SELECT COUNT(*) AS visible_stock_records FROM public.product_stock;
+\echo EXPECTED: UPDATE 0 (no rows changed by non-admin).
+UPDATE public.product_stock
+   SET stock = stock
+ WHERE id = (SELECT MIN(id) FROM public.product_stock);
+ROLLBACK;
+\echo Review above for current_user=authenticated, is_admin=f, UPDATE 0, ROLLBACK.

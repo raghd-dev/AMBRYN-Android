@@ -1,0 +1,5 @@
+# Copy this file to local.properties and fill in your own Supabase project values.
+# local.properties is ignored by Git.
+
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY

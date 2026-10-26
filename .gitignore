@@ -1,0 +1,36 @@
+# Android Studio / Gradle
+.gradle/
+**/build/
+.idea/
+*.iml
+local.properties
+.cxx/
+.externalNativeBuild/
+captures/
+# Signing keys and credentials
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.asc
+key.properties
+google-services.json
+.env
+.env.*
+!.env.example
+# OS
+.DS_Store
+Thumbs.db
+
+# Private DB exports and local backups
+*.backup
+*.dump
+*.bak
+*.sqlite
+*.db
+*.pem
+*.key
+private_backups/
+AMBRYN_Private_Backup/
+**/ownership_report.txt
+**/ambryn_verify_report.txt
