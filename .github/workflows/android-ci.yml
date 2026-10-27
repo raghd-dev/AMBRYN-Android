@@ -2,7 +2,8 @@ name: Android CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -13,10 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      # Placeholder values compile the educational demo without connecting to any service.
-      # NEVER add Supabase service-role keys to this workflow.
-      SUPABASE_URL: https://example.invalid
-      SUPABASE_PUBLISHABLE_KEY: ci_placeholder_no_live_keys
+      # Safe compile-time placeholders; never add private Supabase keys here.
+      SUPABASE_URL: 'https://example.invalid'
+      SUPABASE_PUBLISHABLE_KEY: 'ci_placeholder_no_live_keys'
 
     steps:
       - name: Checkout source
@@ -25,13 +25,13 @@ jobs:
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '21'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
 
-      - name: Set up Gradle and verify wrapper
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           validate-wrappers: true
@@ -39,6 +39,5 @@ jobs:
       - name: Install Android SDK 35
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
 
-      - name: Run local unit tests and build debug APK
-
-      -run: bash ./gradlew --no-daemon testDebugUnitTest assembleDebug
+      - name: Run unit tests and build debug APK
+        run: bash ./gradlew --no-daemon --console=plain testDebugUnitTest assembleDebug
