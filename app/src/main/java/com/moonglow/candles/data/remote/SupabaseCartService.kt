@@ -2,6 +2,7 @@ package com.moonglow.candles.data.remote
 
 import com.moonglow.candles.data.model.CartItem
 import com.moonglow.candles.data.model.Product
+import com.moonglow.candles.domain.cart.consolidateCartItems
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
@@ -17,7 +18,7 @@ class SupabaseCartService {
             val path = "/rest/v1/cart_items?user_id=eq.${AuthenticatedSupabaseHttp.encode(identity.userId)}"
             AuthenticatedSupabaseHttp.request("DELETE", path)
             // Minimal demo persistence. A future version should use one transactional RPC.
-            cart.forEach { item ->
+            consolidateCartItems(cart).forEach { item ->
                 val body = JSONObject().apply {
                     put("user_id", identity.userId)
                     put("user_email", identity.email)
@@ -38,13 +39,13 @@ class SupabaseCartService {
             "GET", "/rest/v1/cart_items?select=*&user_id=eq.${AuthenticatedSupabaseHttp.encode(identity.userId)}"
         )
         val array = JSONArray(result)
-        buildList {
+        consolidateCartItems(buildList {
             for (i in 0 until array.length()) {
                 val item = array.getJSONObject(i)
                 val product = products.find { it.id == item.optString("product_id") }
                 val quantity = item.optInt("quantity", 1)
                 if (product != null && quantity > 0) add(CartItem(product, quantity))
             }
-        }
+        })
     }
 }

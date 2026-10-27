@@ -4,6 +4,7 @@ import com.moonglow.candles.R
 import com.moonglow.candles.data.model.*
 import com.moonglow.candles.data.remote.*
 import com.moonglow.candles.domain.checkout.calculateDemoTotals
+import com.moonglow.candles.domain.cart.consolidateCartItems
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,7 +81,7 @@ class MoonGlowRepository {
         CoroutineScope(Dispatchers.IO).launch {
             cartService.fetchCart(email, products)
                 .onSuccess {
-                    _cart.value = it
+                    _cart.value = consolidateCartItems(it)
                 }
 
             wishlistService.fetchWishlist(email)
@@ -114,7 +115,7 @@ class MoonGlowRepository {
     }
 
     fun addToCart(product: Product) {
-        _cart.value = _cart.value.toMutableList().also { list ->
+        _cart.value = consolidateCartItems(_cart.value).toMutableList().also { list ->
             val index = list.indexOfFirst { it.product.id == product.id }
 
             if (index >= 0) {
@@ -148,7 +149,7 @@ class MoonGlowRepository {
     }
 
     fun changeQty(productId: String, delta: Int) {
-        _cart.value = _cart.value.mapNotNull { item ->
+        _cart.value = consolidateCartItems(_cart.value).mapNotNull { item ->
             if (item.product.id == productId) {
                 item.copy(quantity = item.quantity + delta).takeIf { it.quantity > 0 }
             } else {

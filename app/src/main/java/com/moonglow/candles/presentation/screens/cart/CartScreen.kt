@@ -29,6 +29,7 @@ import com.moonglow.candles.presentation.components.EmptyState
 import com.moonglow.candles.presentation.components.GlowButton
 import com.moonglow.candles.presentation.components.formatPrice
 import com.moonglow.candles.domain.checkout.calculateDemoTotals
+import com.moonglow.candles.domain.cart.consolidateCartItems
 
 @Composable
 fun CartScreen(
@@ -38,7 +39,9 @@ fun CartScreen(
     val cart by repo.cart.collectAsState()
     var selectedItem by remember { mutableStateOf<CartItem?>(null) }
 
-    val subtotal = calculateDemoTotals(cart).subtotal
+    // Defensive normalization: repeated legacy rows must not crash LazyColumn.
+    val displayCart = remember(cart) { consolidateCartItems(cart) }
+    val subtotal = calculateDemoTotals(displayCart).subtotal
 
     // An opaque surface keeps other navigation destinations from bleeding through
     // during navigation transitions or emulator screenshots.
@@ -53,14 +56,14 @@ fun CartScreen(
                 Column {
                     Text("My Cart", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                     Text(
-                        "${cart.sumOf { it.quantity }} item${if (cart.sumOf { it.quantity } == 1) "" else "s"}",
+                        "${displayCart.sumOf { it.quantity }} item${if (displayCart.sumOf { it.quantity } == 1) "" else "s"}",
                         color = SoftBrown,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
 
-            if (cart.isEmpty()) {
+            if (displayCart.isEmpty()) {
                 Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     EmptyState(
                         icon = "🛒",
@@ -73,7 +76,7 @@ fun CartScreen(
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(bottom = 12.dp)
                 ) {
-                    items(cart, key = { it.product.id }) { item ->
+                    items(displayCart, key = { it.product.id }) { item ->
                         CartItemCard(
                             item = item,
                             onOpen = { selectedItem = item },
@@ -117,7 +120,7 @@ fun CartScreen(
         }
     }
 
-    cart.firstOrNull { it.product.id == selectedItem?.product?.id }?.let { item ->
+    displayCart.firstOrNull { it.product.id == selectedItem?.product?.id }?.let { item ->
         CartItemDetailsDialog(
             item = item,
             onDismiss = { selectedItem = null },
