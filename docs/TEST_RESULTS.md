@@ -1,48 +1,37 @@
-# AMBRYN — Verified vs. pending tests
+# AMBRYN — QA and verification record
 
-Developer-reported manual and database results through October 26, 2026. These are developer-reported emulator/database tests, not an independently audited production certification.
+_Updated 2026-10-27. Results below are based on developer-supplied logs, screenshots, and manual confirmations; this is not an independent security certification._
 
-| Area | Test | Status | Evidence / note |
+## Verified by developer
+
+| Date | Area | Finding | Evidence / limit |
 |---|---|---|---|
-| Authentication | Login and logout | PASS | User confirmed |
-| Authentication | Close/reopen session restore | PASS | User confirmed |
-| Customer | Product browsing | PASS | User confirmed |
-| Customer | Cart | PASS | User confirmed |
-| Customer | Wishlist | PASS | User confirmed |
-| Customer | Demo checkout | PASS | User confirmed |
-| Customer | Order history | PASS | User confirmed |
-| Security | Two distinct customer accounts do not see each other's data | PASS | User confirmed |
-| Security | Public review columns don't grant read of user_email | PASS | SQL privileges returned false/false, true for review_text |
-| Admin | Admin login/dashboard navigation | PASS | User confirmed |
-| Admin | Six inventory records shown | PASS | User confirmed |
-| Database | RLS cutover committed | PASS | User provided psql COMMIT |
-| Database | Legacy anonymous write policies count = 0 | PASS | User supplied verify results |
-| Admin | Update stock and reload | PASS (reported) | Developer reports latest release-candidate inventory management passed |
-| Admin | Restore stock and reload | PASS (reported) | Included in developer-reported inventory management test |
-| Admin | Update demo order status and reload | PASS (reported) | Developer reports latest release-candidate order management passed |
-| Security | Non-admin account cannot enter admin UI | PASS (reported) | UI check only, not backend authorization verification |
-| Security | Non-admin user's protected stock write refused by PostgreSQL RLS | PASS (reported) | PostgreSQL role/JWT-claim simulation: `authenticated`, `auth.uid()` set, `ambryn_is_admin()=false`, 6 visible stock rows, `UPDATE 0`, `ROLLBACK` (Oct 20, 2026). Not a live REST JWT test. |
-| Release | Builds/runs as tested by developer | PASS (reported) | Earlier candidates were tested; exact final source now confirmed to compile; fresh functional retest after copy was not separately recorded |
-| Release | Build exact final package | PASS (developer screenshot) | Windows CMD: BUILD SUCCESSFUL in 1m 5s; Java 21.0.8 / Gradle 8.13; not independently reproduced |
-| Release | Full local automated tests and debug build | PASS (developer CMD log) | `--no-daemon testDebugUnitTest assembleDebug`; exit code 0; BUILD SUCCESSFUL in 34s on October 26, 2026 |
-| Release | Review image licensing and scrub sensitive screenshots | PARTIAL | Two safe developer-supplied screenshots added; third-party image rights remain pending |
+| 2026-10-26 | Original JVM unit tests and build | **PASS** | `testDebugUnitTest assembleDebug`, `BUILD SUCCESSFUL in 34s` reported from Windows. Initial test suite contained 17 tests. |
+| 2026-10-27 | Cart crash diagnosis | **REPRODUCED AND FIXED** | Crash log: `IllegalArgumentException: Key "p1" was already used` in Jetpack Compose LazyList. |
+| 2026-10-27 | Cart regression tests | **PASS in developer build** | 3 new cases: merge duplicate products, ignore nonpositive quantities, handle empty cart. Cart-fix code pushed as commit `02ea321`. |
+| 2026-10-27 | Cart → Checkout → Admin | **PASS, manual** | Screenshots show cart opened, quantities/totals carried to Checkout, and matching demo order in Admin. |
+| 2026-10-27 | GitHub Actions | **PASS for `02ea321`** | Screenshot of green Android CI run (2m 31s). Later commits must be checked separately. |
+| 2026-10-27 | Admin Orders UI | **PASS, manual** | Four checks reported: short reference, status selector, status update, cancel confirmation. |
+| 2026-10-27 | Latest local Gradle | **PASS** | Developer pasted `BUILD SUCCESSFUL in 1m 5s`, `testDebugUnitTest` and `assembleDebug` completed. There was one nonblocking deprecated icon warning (`ReceiptLong`). |
+| 2026-10-27 | Admin formatting tests | **PASS in developer build** | 4 tests: branded ID, bare UUID, blank ID fallback and custom ID. |
+| 2026-10-27 | Source-set test inventory | **24 JUnit tests** | 17 original + 3 Cart + 4 Admin, counted from known source patches. |
 
-Do not change a PASS into a broader claim than the actual test supports.
+## Previously reported backend and journey checks
 
+- Login/logout, session restoration, product browsing, wishlist, order history, simulated checkout, stock adjustments, and admin navigation were reported passing.
+- Two customer accounts were reported isolated in the UI; this is not equivalent to a comprehensive customer JWT API security test.
+- PostgreSQL RLS was reported enabled for ten public app tables; selected grants and review-email permissions were inspected.
+- Simulated non-admin stock-write check returned `ambryn_is_admin() = false` and `UPDATE 0` inside a rolled-back SQL transaction. A live authenticated REST/JWT write-denial test remains unconfirmed.
+- Cart/wishlist ownership checks previously found three rows of each type with valid Auth ownership. A historical admin-role row with `user_id IS NULL` was left unchanged; the inspected role check used signed-in user IDs.
+- A public-schema dump passed `pg_restore --list` validation but full restore and Auth/Storage coverage were not tested.
 
-## UI/UX patch verification (October 26, 2026)
+## Not yet established
 
-The consolidated Kotlin UI patch compiled on Windows with JDK 21 (`BUILD SUCCESSFUL in 2m 2s`, developer-provided CMD output). The developer subsequently launched AMBRYN, signed in, and reported all seven areas **PASS**: Home, Candles/product details, Cart, Wishlist, Checkout, Profile/order history, Admin Dashboard. The Android Studio screenshot shows the application running. The Android Studio project path shown differed from the CMD folder, so these are developer-reported UI results, not an independent byte-for-byte installed-APK audit.
+- Successful GitHub Actions for the **Admin UI commit** and this documentation commit, until those runs complete.
+- A full end-to-end automated Android UI test suite; screenshots and user checks are manual.
+- Real non-admin/customer JWT negative API tests and independent security review.
+- Rights to redistribute the original photographs and all past image blobs in Git history.
+- Screenshot privacy checks for the six new local captures; filenames alone are not verification.
+- A fully transactional, production-capable checkout/inventory system.
 
-## Automated test / CI additions (October 26, 2026)
-
-17 new JVM JUnit tests were added for pricing, shipping boundary, form presence checks, and formatting. A GitHub Actions workflow was added to build the APK and run tests on JDK 21. **LOCAL PASS**: developer ran `gradlew.bat --no-daemon --console=plain --no-parallel --max-workers=2 testDebugUnitTest assembleDebug` with exit code 0 and BUILD SUCCESSFUL in 34s on October 26, 2026, after a persistent Gradle daemon error. **REMOTE PENDING**: GitHub Actions has not yet run on GitHub.
-
-## Latest database integrity audit (October 26, 2026)
-
-- All 10 expected public application tables had RLS enabled.
-- Read-only grant checks returned false for the sampled anonymous sensitive operations and authenticated role self-insertion; review-email SELECT permissions were false for anon/authenticated. Grants alone do not demonstrate all RLS behaviors.
-- Cart: 3 rows, 0 NULL owners and 0 Auth UUID/email mismatches. Wishlist: 3 rows, 0 NULL owners and 0 mismatches.
-- One currently linked admin role; one historical `user_roles` admin row has NULL `user_id` and remains unchanged. It does not satisfy the inspected UUID-based `ambryn_is_admin()` predicate.
-- A public-schema `pg_dump` custom archive existed (52,089 bytes) and `pg_restore --list` exited 0. No restoration performed; Auth and Storage are outside its scope.
-- Simulated non-admin stock write was denied in PostgreSQL (`UPDATE 0`, rolled back). A live REST denial check using a real customer's access token is **still pending**.
+See `FINAL_RELEASE_GATES.md` before making the repository public. Do not rerun historical database migrations during portfolio documentation work.
