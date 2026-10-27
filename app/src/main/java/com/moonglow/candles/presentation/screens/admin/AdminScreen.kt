@@ -12,6 +12,7 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.moonglow.candles.core.theme.*
@@ -338,53 +339,144 @@ private fun AdminOrderCard(
         "Delivered",
         "Cancelled"
     )
+    var actionsExpanded by remember(order.id) { mutableStateOf(false) }
+    var showFullReference by remember(order.id) { mutableStateOf(false) }
+    var pendingCancellation by remember(order.id) { mutableStateOf(false) }
 
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(CardWhite),
-        elevation = CardDefaults.cardElevation(5.dp)
-    ) {
-
-        Column(
-            modifier = Modifier.padding(18.dp)
-        ) {
-
-            Text(
-                text = order.id,
-                fontWeight = FontWeight.Bold,
-                color = Charcoal
-            )
-
-            Text(
-                text = "Total: ${formatPrice(order.total)}",
-                color = GoldDark
-            )
-
-            Text(
-                text = "Payment: ${order.paymentMethod}",
-                color = SoftBrown
-            )
-
-            Text(
-                text = "Address: ${order.address}",
-                color = SoftBrown
-            )
-
-            Text(
-                text = "Status: ${order.status}",
-                fontWeight = FontWeight.Bold,
-                color = Charcoal
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            statuses.forEach { status ->
+    // Order updates still use order.id; the shortened reference is display-only.
+    if (showFullReference) {
+        AlertDialog(
+            onDismissRequest = { showFullReference = false },
+            title = { Text("Full order reference") },
+            text = { Text(order.id) },
+            confirmButton = {
+                TextButton(onClick = { showFullReference = false }) { Text("Close") }
+            }
+        )
+    }
+    if (pendingCancellation) {
+        AlertDialog(
+            onDismissRequest = { pendingCancellation = false },
+            title = { Text("Cancel this order?") },
+            text = { Text("This changes the order status to Cancelled. You can change it again from the status menu.") },
+            dismissButton = {
+                TextButton(onClick = { pendingCancellation = false }) { Text("Keep order") }
+            },
+            confirmButton = {
                 TextButton(
                     onClick = {
-                        onStatus(status)
+                        pendingCancellation = false
+                        onStatus("Cancelled")
                     }
+                ) { Text("Cancel order", color = MaterialTheme.colorScheme.error) }
+            }
+        )
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = CardWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Order ${shortAdminOrderReference(order.id)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Charcoal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = formatPrice(order.total),
+                        color = GoldDark,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                IconButton(onClick = { showFullReference = true }) {
+                    Icon(Icons.Outlined.Info, contentDescription = "View full order reference", tint = SoftBrown)
+                }
+            }
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = if (order.status == "Cancelled") CreamDark else ChampagneGold
+            ) {
+                Text(
+                    text = "Status: ${order.status}",
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    color = if (order.status == "Cancelled") Terracotta else GoldDark,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            HorizontalDivider(color = DividerColor)
+
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.Payments, contentDescription = null, tint = SoftBrown, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Payment: ${order.paymentMethod}", color = SoftBrown, style = MaterialTheme.typography.bodyMedium)
+                }
+                Row(verticalAlignment = Alignment.Top) {
+                    Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = SoftBrown, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Delivery: ${order.address}",
+                        color = SoftBrown,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    onClick = { actionsExpanded = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("Set $status")
+                    Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Update order status")
+                    Spacer(Modifier.width(4.dp))
+                    Icon(Icons.Outlined.ArrowDropDown, contentDescription = null)
+                }
+                DropdownMenu(
+                    expanded = actionsExpanded,
+                    onDismissRequest = { actionsExpanded = false }
+                ) {
+                    statuses.forEach { status ->
+                        DropdownMenuItem(
+                            text = { Text(status) },
+                            enabled = order.status != status,
+                            leadingIcon = {
+                                if (status == order.status) {
+                                    Icon(Icons.Outlined.Check, contentDescription = null, tint = Gold)
+                                }
+                            },
+                            onClick = {
+                                actionsExpanded = false
+                                if (status == "Cancelled") {
+                                    pendingCancellation = true
+                                } else {
+                                    onStatus(status)
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
