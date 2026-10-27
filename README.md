@@ -19,6 +19,8 @@ These are **real emulator captures**, not generated UI mockups. They should only
 | **Cart** | **Demo checkout** | **Admin orders** |
 | ![Shopping cart](docs/screenshots/06-cart-final.png) | ![Demo checkout](docs/screenshots/07-checkout-final.png) | ![Admin order management](docs/screenshots/08-admin-final.png) |
 
+[Watch the 28-second **private screenshot walkthrough**](docs/media/AMBRYN_Private_Demo_Walkthrough.mp4) — a slideshow of real emulator captures, not a recording of live interactions. The video uses the existing demo product photography and is **not cleared for public redistribution**.
+
 > The screenshots are real emulator captures. The Checkout and Admin order screenshots have **opaque privacy redactions** covering entered contact/location fields; these are not AI-generated app screens. The current Catalog, Product and Cart emulator captures are included in this private-repository patch. The Home screenshot is kept from your local project and is not overwritten. Verify each filename and review the [screenshot checklist](docs/screenshots/README.md). **Keep the repository private while image licensing and Git history remain unresolved.**
 
 ## Features
@@ -77,7 +79,7 @@ The local directory above is an example of the developer's setup, not a required
 | Cart and checkout | **PASS — emulator screenshots and developer confirmation:** cart opens, duplicate-key crash resolved, quantities shown, checkout opened and a demo order appeared in Admin. |
 | Admin Orders update | **PASS — developer-reported manual verification:** readable short IDs, compact status menu, status updates and cancellation confirmation. |
 | Local Android tests and debug build | **PASS — developer terminal:** `testDebugUnitTest assembleDebug`, `BUILD SUCCESSFUL in 1m 5s` for the Admin update. |
-| GitHub Actions | **PASS for Cart-fix commit `02ea321` — screenshot verified**, Android CI completed in 2m 31s. The newer Admin/docs commit requires its own CI run. |
+| GitHub Actions | **PASS — developer screenshots confirmed green CI on `02ea321` (Cart), `85db419` (Admin), and `76bf2f5` (portfolio screenshots).** Latest observed workflow #7 for `76bf2f5` completed in 1m 54s. This does not certify runtime security or rights. |
 | JVM tests | **24 JUnit test cases in the tested source set:** 17 original + 3 cart-regression + 4 Admin-formatting tests. |
 | Server authorization | **Partially verified:** RLS and privilege checks and a simulated non-admin stock-write denial; no independent penetration test or confirmed live non-admin JWT denial. |
 | Public asset redistribution | **NOT CLEARED:** third-party product photo provenance and historical Git assets must be reviewed before the repository becomes public. |
@@ -106,7 +108,7 @@ sql/              # Database history and read-only verification scripts
 - Database RLS tests are not a substitute for independent production-grade security, accessibility or cross-device testing.
 - One historical admin-role row without a user ID was observed in the verified database state; no privilege was assigned based solely on a matching email address.
 - Original product images may include third-party brands and **are not yet approved for public redistribution**. A disclaimer alone does not grant rights; making the repo public exposes historical committed versions as well.
-- The **repository is intentionally private** pending image-rights, privacy, historical-Git and security checks. No production-readiness claim is made.
+- The **repository remains private** while third-party image redistribution rights and historical-Git screening remain unresolved. The private portfolio preview and release checklist are available in `docs/PHASE1_PRIVATE_RELEASE_REPORT.md`. No production-readiness claim is made.
 
 Read the [portfolio case study](docs/PORTFOLIO_CASE_STUDY.md) and [release gates](docs/FINAL_RELEASE_GATES.md).
 
