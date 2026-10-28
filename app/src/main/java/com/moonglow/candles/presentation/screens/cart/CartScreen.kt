@@ -37,6 +37,7 @@ fun CartScreen(
     onCheckout: () -> Unit
 ) {
     val cart by repo.cart.collectAsState()
+    val cartSyncError by repo.cartSyncError.collectAsState()
     var selectedItem by remember { mutableStateOf<CartItem?>(null) }
 
     // Defensive normalization: repeated legacy rows must not crash LazyColumn.
@@ -60,6 +61,31 @@ fun CartScreen(
                         color = SoftBrown,
                         style = MaterialTheme.typography.bodySmall
                     )
+                }
+            }
+
+            // If a cloud save fails, make the unsynced state visible instead of
+            // making the local cart look as though it is safely persisted.
+            if (cartSyncError != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = cartSyncError.orEmpty(),
+                            modifier = Modifier.weight(1f),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        TextButton(onClick = repo::retryCartSync) {
+                            Text("Retry")
+                        }
+                    }
                 }
             }
 

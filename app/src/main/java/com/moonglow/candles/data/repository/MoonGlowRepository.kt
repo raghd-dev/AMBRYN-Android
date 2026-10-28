@@ -1,6 +1,7 @@
 package com.moonglow.candles.data.repository
 
 import com.moonglow.candles.R
+import android.util.Log
 import com.moonglow.candles.data.model.*
 import com.moonglow.candles.data.remote.*
 import com.moonglow.candles.domain.checkout.calculateDemoTotals
@@ -51,6 +52,10 @@ class MoonGlowRepository {
     private val _cart = MutableStateFlow<List<CartItem>>(emptyList())
     val cart: StateFlow<List<CartItem>> = _cart.asStateFlow()
 
+    // Visible feedback for network/auth failures; never log JWTs or response payloads.
+    private val _cartSyncError = MutableStateFlow<String?>(null)
+    val cartSyncError: StateFlow<String?> = _cartSyncError.asStateFlow()
+
     private val _wishlist = MutableStateFlow<Set<String>>(emptySet())
     val wishlist: StateFlow<Set<String>> = _wishlist.asStateFlow()
 
@@ -76,6 +81,7 @@ class MoonGlowRepository {
     val productReviews: StateFlow<Map<String, List<ProductReview>>> = _productReviews.asStateFlow()
 
     fun setLoggedInUser(name: String, email: String) {
+        _cartSyncError.value = null
         _user.value = UserProfile(name = name, email = email)
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -107,6 +113,7 @@ class MoonGlowRepository {
     }
 
     fun logout() {
+        _cartSyncError.value = null
         _user.value = null
         _userRole.value = "customer"
         _cart.value = emptyList()
@@ -310,14 +317,42 @@ class MoonGlowRepository {
         return reviews.size
     }
 
-    private fun syncCartOnline() {
-        val email = _user.value?.email ?: return
+    fun retryCartSync() = syncCartOnline()
 
+    private fun syncCartOnline() {
+        val email = _user.value?.email
+        if (email == null) {
+            _cartSyncError.value = "Sign in to save your cart online."
+            Log.w("AMBRYN_CART_SYNC", "saveCart skipped: no signed-in app user")
+            return
+        }
+
+        val snapshot = consolidateCartItems(_cart.value)
+        _cartSyncError.value = null
         CoroutineScope(Dispatchers.IO).launch {
-            cartService.saveCart(
-                email = email,
-                cart = _cart.value
-            )
+            cartService.saveCart(email = email, cart = snapshot)
+                .onSuccess {
+                    _cartSyncError.value = null
+                    Log.d("AMBRYN_CART_SYNC", "saveCart completed successfully")
+                }
+                .onFailure { error ->
+                    _cartSyncError.value =
+                        "Your cart is visible here but was not saved online. Tap Retry."
+                    // Only a safe category / HTTP status is logged, never response bodies,
+                    // tokens, emails, product details or customer identifiers.
+                    val message = error.message.orEmpty()
+                    val httpStatus = Regex("Supabase HTTP ([0-9]{3})")
+                        .find(message)?.groupValues?.get(1)
+                    val reason = when {
+                        httpStatus != null -> "HTTP $httpStatus"
+                        message.contains("Session expired", true) -> "session expired"
+                        message.contains("log in", true) -> "not authenticated"
+                        message.contains("Cart owner mismatch", true) -> "identity mismatch"
+                        message.contains("configured", true) -> "configuration error"
+                        else -> error.javaClass.simpleName
+                    }
+                    Log.e("AMBRYN_CART_SYNC", "saveCart failed: $reason")
+                }
         }
     }
 
