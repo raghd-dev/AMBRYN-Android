@@ -1,37 +1,38 @@
 # AMBRYN — QA and verification record
 
-_Updated 2026-10-27. Results below are based on developer-supplied logs, screenshots, and manual confirmations; this is not an independent security certification._
+**Updated:** October 28, 2026. This report consolidates developer-supplied terminal output, screenshots, SQL query results and manual confirmations. It is **not an independent penetration test or production security certification**.
 
-## Verified by developer
+## App and build verification
 
-| Date | Area | Finding | Evidence / limit |
-|---|---|---|---|
-| 2026-10-26 | Original JVM unit tests and build | **PASS** | `testDebugUnitTest assembleDebug`, `BUILD SUCCESSFUL in 34s` reported from Windows. Initial test suite contained 17 tests. |
-| 2026-10-27 | Cart crash diagnosis | **REPRODUCED AND FIXED** | Crash log: `IllegalArgumentException: Key "p1" was already used` in Jetpack Compose LazyList. |
-| 2026-10-27 | Cart regression tests | **PASS in developer build** | 3 new cases: merge duplicate products, ignore nonpositive quantities, handle empty cart. Cart-fix code pushed as commit `02ea321`. |
-| 2026-10-27 | Cart → Checkout → Admin | **PASS, manual** | Screenshots show cart opened, quantities/totals carried to Checkout, and matching demo order in Admin. |
-| 2026-10-27 | GitHub Actions | **PASS for `02ea321`** | Screenshot of green Android CI run (2m 31s). Later commits must be checked separately. |
-| 2026-10-27 | Admin Orders UI | **PASS, manual** | Four checks reported: short reference, status selector, status update, cancel confirmation. |
-| 2026-10-27 | Latest local Gradle | **PASS** | Developer pasted `BUILD SUCCESSFUL in 1m 5s`, `testDebugUnitTest` and `assembleDebug` completed. There was one nonblocking deprecated icon warning (`ReceiptLong`). |
-| 2026-10-27 | Admin formatting tests | **PASS in developer build** | 4 tests: branded ID, bare UUID, blank ID fallback and custom ID. |
-| 2026-10-27 | Source-set test inventory | **24 JUnit tests** | 17 original + 3 Cart + 4 Admin, counted from known source patches. |
+| Date | Check | Result and evidence |
+|---|---|---|
+| Oct 26 | Baseline JVM tests and debug build | **PASS**, developer reported `BUILD SUCCESSFUL` and 17 initial JUnit tests. |
+| Oct 27 | Cart duplicate-key crash | **FIXED**; Android stack trace showed duplicate LazyColumn key `p1`; merge/consolidation logic and three regression tests added. |
+| Oct 27 | Cart → Checkout → Admin | **PASS**, emulator screenshots and manual confirmation, including demo order visibility. |
+| Oct 27 | Admin Orders update | **PASS**, short IDs, single status menu, status update and cancellation confirmation verified manually; four formatting tests added. |
+| Oct 27 | Portfolio screenshot set | **6 genuine emulator screenshots** committed; Checkout and Admin displayed-field values redacted for privacy. |
+| Oct 28 | Authenticated review access | **PASS for configuration**: `authenticated` can SELECT six display columns; `anon` cannot; `user_email` and `user_id` not readable. Kotlin review GET now uses an authenticated token. |
+| Oct 28 | Cart diagnostic build | **PASS**, developer pasted `testDebugUnitTest assembleDebug`, `BUILD SUCCESSFUL in 59s`. |
+| Oct 28 | Cart database persistence | **OBSERVED**, developer reported two non-admin cart rows, one valid owner and zero orphaned items; log included `saveCart completed successfully`. |
+| Oct 28 | GitHub Actions | **PASS reported by developer** for latest confirmed commit `b3d7487` (Cart sync warning/Retry). |
 
-## Previously reported backend and journey checks
+## Authorization review
 
-- Login/logout, session restoration, product browsing, wishlist, order history, simulated checkout, stock adjustments, and admin navigation were reported passing.
-- Two customer accounts were reported isolated in the UI; this is not equivalent to a comprehensive customer JWT API security test.
-- PostgreSQL RLS was reported enabled for ten public app tables; selected grants and review-email permissions were inspected.
-- Simulated non-admin stock-write check returned `ambryn_is_admin() = false` and `UPDATE 0` inside a rolled-back SQL transaction. A live authenticated REST/JWT write-denial test remains unconfirmed.
-- Cart/wishlist ownership checks previously found three rows of each type with valid Auth ownership. A historical admin-role row with `user_id IS NULL` was left unchanged; the inspected role check used signed-in user IDs.
-- A public-schema dump passed `pg_restore --list` validation but full restore and Auth/Storage coverage were not tested.
+- Supabase SQL output showed **RLS enabled on all ten public application tables**.
+- Administrator helper `ambryn_is_admin()` was reviewed: checks `auth.uid()` against `user_roles`, uses a restricted `search_path`, and is unavailable for anonymous execution.
+- Review access is column-limited to `id`, `product_id`, `user_name`, `rating`, `review_text`, and `created_at` for the `authenticated` role; email and UID are not SELECT-granted.
+- **Customer A/B direct JWT isolation:** developer stated the test **passed**, without raw request/response transcripts supplied in the current exchange.
+- **Unauthorized administrator writes using a regular-user JWT:** developer stated the test **passed**, without raw request/response transcripts supplied in the current exchange.
+- These results support a university demo security narrative; they do not establish a comprehensive external audit or production-ready order pricing.
 
-## Not yet established
+## Known limitations and unverified areas
 
-- Successful GitHub Actions for the **Admin UI commit** and this documentation commit, until those runs complete.
-- A full end-to-end automated Android UI test suite; screenshots and user checks are manual.
-- Real non-admin/customer JWT negative API tests and independent security review.
-- Rights to redistribute the original photographs and all past image blobs in Git history.
-- Screenshot privacy checks for the six new local captures; filenames alone are not verification.
-- A fully transactional, production-capable checkout/inventory system.
+- The source set previously contained **24 JUnit test cases** (17 baseline + 3 Cart regression + 4 Admin formatting); subsequent patch work did not provide a fresh independent test count.
+- There is no demonstrated full instrumented UI test suite or load test.
+- Checkout creates demonstration orders; server-side authoritative pricing, payments and transactional reservations are not implemented as a production store.
+- Cart synchronization is not atomic across all backend operations. Warning/Retry handling was added; network-failure recovery deserves further tests.
+- Original product photographs came from Pinterest; reuse/redistribution rights, including historical Git assets and screenshot appearances, were not established.
+- One prior unmatched admin-role row was reported; the admin-function review did not indicate it granted privileges without a matching Auth UID.
+- README display and public visibility cannot be independently checked without access to the live repository.
 
-See `FINAL_RELEASE_GATES.md` before making the repository public. Do not rerun historical database migrations during portfolio documentation work.
+See `FINAL_RELEASE_GATES.md`. Never publish secrets, live tokens, database exports or real customer details in demonstration artifacts.

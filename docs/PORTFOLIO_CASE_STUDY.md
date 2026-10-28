@@ -1,39 +1,34 @@
-# AMBRYN — Android e-commerce case study
+# AMBRYN — Android e-commerce portfolio case study
 
-**Project:** AMBRYN — Candles & Rituals
-**Context:** University Android app, evolved into a software engineering portfolio project
-**Platform:** Android (Kotlin / Jetpack Compose)
-**Backend:** Supabase Auth, REST and PostgreSQL RLS
-**Status:** Educational demonstration; private GitHub repository pending asset licensing review
+**Project type:** University coursework evolved into a software engineering portfolio demo
 
-## The product
+**Technology:** Kotlin · Jetpack Compose · Material 3 · Supabase Auth/REST · PostgreSQL RLS · Gradle · JUnit · GitHub Actions
 
-AMBRYN demonstrates a candle-shopping experience across browsing, product details, cart, wishlist, checkout and order history. An Admin dashboard supports stock overview and demo-order management. Checkout is simulated and does not charge a payment method.
+## Project overview
 
-## What was engineered and refined
+AMBRYN demonstrates a mobile candle-shopping journey and an administration workflow. Customers can browse a catalog, view products, manage a wishlist/cart, submit demonstration orders and read authenticated product reviews. An Admin view supports stock and demo-order status management. It is **not a real store** and does not accept payments.
 
-**Shopping flow:** Unified purchase summaries and demonstration order display across the customer and admin experiences.
+## Engineering work demonstrated
 
-**Cart reliability:** Diagnosed an actual emulator crash through the Android runtime stack trace. Duplicate cart entries caused Jetpack Compose to reuse the key `p1` in a lazy list. Consolidation by product ID removed duplicate row keys while preserving combined quantities; three unit tests cover the regression.
+**Debugging a Compose crash:** An Android stack trace revealed `IllegalArgumentException: Key "p1" was already used` in a lazy list. Cart entries were consolidated by product ID, merging quantities and preventing duplicate row keys. Regression tests cover the rule.
 
-**Administrator usability:** Refactored order cards to show concise references and an accessible full ID, replaced multiple stacked status buttons with a selector and required confirmation for cancellation. Four focused formatting tests protect reference formatting.
+**Improving synchronization feedback:** A save operation could previously fail without a visible signal. Added user-facing Cart sync warnings and Retry, plus a bounded diagnostic log message. The developer subsequently observed saved Cart records linked to a real test account.
 
-**CI and test feedback:** The Windows JVM suite and debug APK build passed after the Admin changes. GitHub Actions was confirmed green for the Cart-fix commit. The working codebase contains 24 JUnit cases across checkout/pricing, cart regression and Admin references; CI for newer commits must be confirmed separately.
+**Protecting product-review privacy:** Supabase RLS and column-level grants now allow signed-in users to view review content without giving the client `SELECT` permission on reviewer emails or Auth UIDs. The Android reviews request was updated to attach its authenticated session.
 
-**Data security boundaries:** Supabase authentication and PostgreSQL RLS are used for customer and administrator flows. The repo contains read-only database validation scripts and documented caveats, including the distinction between a simulated database permission denial and a real customer-JWT API test.
+**Refining the Admin workflow:** More legible order references, a single status control and a confirmation on cancellation reduce clutter while retaining the original backend order ID.
 
-## Tools and technologies
+**Testing and CI:** A developer-run JUnit/debug build passed, and GitHub Actions was reported green at commit `b3d7487`. RLS and privileges were reviewed. Two live JWT-negative access tests (cross-customer isolation and non-admin writes) were **reported as passed by the developer**; the request logs were not independently inspected.
 
-Kotlin · Jetpack Compose · Material 3 · Supabase Auth/REST · PostgreSQL/RLS · JUnit 4 · GitHub Actions · Android Studio · Gradle
+## What this project shows recruiters
 
-## Lessons demonstrated
+It brings together Android UI development, state and data consistency, REST integration, user-authenticated access, testing, debugging from real stack traces, documentation and a reproducible GitHub workflow. Its scope and limitations are deliberately stated rather than presented as a commercial product.
 
-- Why UI-level data assumptions, such as unique list keys, need defensive business rules and regression tests.
-- Why an interface polish is stronger when it preserves backend IDs and adds confirmation to destructive changes.
-- Why reproducible builds, documented security limits and licensing decisions are part of software engineering quality—not just visual presentation.
+## Deliberate limits
 
-## Further work
+- Checkout is simulated; no real payment processor is integrated.
+- Workshop and support features are demonstration flows, not production services.
+- Cart persistence isn't an atomic transaction across all operations.
+- Original Pinterest-sourced product photographs were used for coursework; redistribution rights have not been demonstrated.
 
-Resolve third-party photo rights and Git-history exposure; refresh all portfolio images with legally usable assets; review sanitized emulator captures; verify real JWT-negative API behavior; and consider atomic cart/order persistence for production-like robustness.
-
-> **Attribution note:** This case study describes the project work and observed engineering changes; individual versus group coursework contributions should be described accurately before posting on LinkedIn or in a CV.
+**Authorship note:** Describe individual versus group contributions accurately in interviews, the CV and LinkedIn.
