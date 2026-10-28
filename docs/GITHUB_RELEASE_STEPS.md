@@ -64,7 +64,7 @@ Verify the GitHub README renders, download the source in a clean folder and buil
 Do not use GitHub public release as a sign that AMBRYN can accept real commerce transactions.
 
 ## Important: SQL historical files
-`sql/archive/phase1b_OLD_DONT_RUN.sql` is a historical migration draft. `sql/RLS_APPLIED_REFERENCE_DO_NOT_RERUN.sql` mirrors the final security cutover that was applied; **NEVER reapply it to the existing live database**. The release check is read-only and the negative test rolls back.
+`` is a historical migration draft. `sql/RLS_APPLIED_REFERENCE_DO_NOT_RERUN.sql` mirrors the final security cutover that was applied; **NEVER reapply it to the existing live database**. The release check is read-only and the negative test rolls back.
 
 ## Verification before changing repository visibility
 
