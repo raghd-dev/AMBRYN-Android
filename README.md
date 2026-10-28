@@ -1,3 +1,4 @@
+
 # AMBRYN — Candles & Rituals
 
 **A university Android e-commerce demo and software engineering portfolio project.** Built with **Kotlin**, **Jetpack Compose**, **Material 3** and **Supabase**.
@@ -16,7 +17,7 @@ The following are genuine Android emulator screenshots. Contact and delivery fie
 
 | Home | Browse candles | Product details |
 |:---:|:---:|:---:|
-| ![Home screen](docs/screenshots/03-home-final.png) | ![Candle catalog](docs/screenshots/04-candles-final.png) | ![Product details](docs/screenshots/05-product-final.png) |
+| ![Home screen](docs/screenshots/02-home-real-emulator-crop.png) | ![Candle catalog](docs/screenshots/04-candles-final.png) | ![Product details](docs/screenshots/05-product-final.png) |
 | **Shopping cart** | **Demo checkout** | **Admin orders** |
 | ![Shopping cart](docs/screenshots/06-cart-final.png) | ![Demo checkout](docs/screenshots/07-checkout-final.png) | ![Admin order management](docs/screenshots/08-admin-final.png) |
 
@@ -80,7 +81,7 @@ The path above is an example of the original developer environment. Replace it w
 | Authenticated review database grants | **Verified**, six display fields readable; email and Auth UID excluded |
 | Supabase Cart persistence | **Verified**, two saved rows belonged to one valid non-admin account |
 | Customer A/B JWT isolation and non-admin write denial | **Passed — developer-reported**; raw negative-request evidence not independently reviewed in this documentation update |
-| GitHub Actions | **Passed — developer-confirmed** for commit `b3d7487` on `main` |
+| GitHub Actions | **Passed**, latest verified workflow on commit `824dd6d` (`main`), October 28, 2026 |
 | Independent production-grade security audit | **Not performed**; outside scope of a university demo |
 
 See the [QA record](docs/TEST_RESULTS.md), [portfolio case study](docs/PORTFOLIO_CASE_STUDY.md) and [release considerations](docs/FINAL_RELEASE_GATES.md).
@@ -96,7 +97,7 @@ app/src/main/java/com/moonglow/candles/
 app/src/test/     # JVM and regression tests
 .github/workflows/android-ci.yml
 sql/              # Historical database scripts
-docs/            # Screenshots, portfolio notes, security/QA references
+docs/             # Screenshots, portfolio notes, security/QA references
 ```
 
 ## Limitations and attribution
