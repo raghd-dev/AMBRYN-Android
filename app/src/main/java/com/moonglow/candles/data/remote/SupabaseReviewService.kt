@@ -33,7 +33,7 @@ class SupabaseReviewService {
     suspend fun getProductReviews(productId: String): Result<List<ProductReview>> = runCatching {
         val response = AuthenticatedSupabaseHttp.request(
             "GET", "/rest/v1/product_reviews?select=id,product_id,user_name,rating,review_text,created_at&product_id=eq.${AuthenticatedSupabaseHttp.encode(productId)}&order=created_at.desc",
-            authenticated = false
+            authenticated = true
         )
         val array = JSONArray(response)
         buildList {
